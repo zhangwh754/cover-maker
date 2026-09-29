@@ -1,0 +1,10 @@
+node_modules/
+dist/
+output/*
+!output/.gitkeep
+input/*
+!input/.gitkeep
+data/sequence.json
+data/*.lock
+data/*.tmp
+*.log
