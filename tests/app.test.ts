@@ -33,6 +33,12 @@ test('Web preview and export share rendering while preview leaves the sequence u
       return data;
     }
 
+    const blockedImport = await fetch(base + '/api/import-image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: 'http://127.0.0.1/private.png' })
+    });
+    assert.equal(blockedImport.status, 400);
     const firstSequence = await (await fetch(base + '/api/sequence')).json();
     assert.equal(firstSequence.nextIndex, 1);
 
@@ -88,5 +94,3 @@ test('Web preview and export share rendering while preview leaves the sequence u
     await rm(root, { recursive: true, force: true });
   }
 });
-
-

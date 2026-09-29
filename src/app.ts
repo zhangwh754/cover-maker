@@ -7,6 +7,7 @@ import { CoverInputError } from './errors.js';
 import { coverOptionsSchema } from './schema.js';
 import { encodeCover, outputFormatSchema } from './output.js';
 import { peekNextIndex, saveCover } from './sequence.js';
+import { importRemoteImage, RemoteImageError } from './remote-image.js';
 
 export interface AppConfig {
   outputDir: string;
@@ -43,6 +44,18 @@ export function createApp(config: AppConfig): Express {
   app.disable('x-powered-by');
   app.use(express.static(config.publicDir, { extensions: ['html'] }));
 
+  app.post('/api/import-image', express.json({ limit: '8kb' }), async (request, response) => {
+    const imported = await importRemoteImage(request.body?.url);
+    const mime = {
+      jpeg: 'image/jpeg',
+      png: 'image/png',
+      webp: 'image/webp',
+      avif: 'image/avif',
+      tiff: 'image/tiff'
+    }[imported.format];
+    response.set('Cache-Control', 'no-store').set('X-Content-Type-Options', 'nosniff')
+      .type(mime).send(imported.bytes);
+  });
   app.get('/api/sequence', async (_request, response) => {
     response.json({ nextIndex: await peekNextIndex(config.sequencePath) });
   });
@@ -103,6 +116,8 @@ export function createApp(config: AppConfig): Express {
       response.status(400).json({
         error: error.issues.map((issue) => issue.path.join('.') + '：' + issue.message).join('；')
       });
+    } else if (error instanceof RemoteImageError) {
+      response.status(error.statusCode).json({ error: error.message });
     } else if (error instanceof CoverInputError) {
       response.status(400).json({ error: error.message });
     } else if (error instanceof multer.MulterError) {
@@ -117,7 +132,3 @@ export function createApp(config: AppConfig): Express {
   app.use(errorHandler);
   return app;
 }
-
-
-
-

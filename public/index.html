@@ -26,16 +26,21 @@
           <h2 id="controls-title">封面内容</h2>
         </div>
         <form id="cover-form">
-          <label class="field">
+          <div class="field">
             <span class="label-text">原始图片 <em>必填</em></span>
-            <span class="upload-box">
-              <input id="image" name="image" type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/tiff" required>
-              <span class="upload-title">选择一张封面图片</span>
+            <label id="upload-box" class="upload-box" tabindex="0">
+              <input id="image" name="image" type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/tiff">
+              <span class="upload-title">选择图片或 Ctrl+V 粘贴</span>
               <span class="upload-hint">JPG / PNG / WEBP / AVIF / TIFF · 最大 20 MB</span>
               <span id="file-name" class="file-name"></span>
-            </span>
-          </label>
-
+            </label>
+            <div class="remote-row">
+              <input id="image-url" type="text" inputmode="url" autocomplete="off"
+                placeholder="粘贴网络图片链接 https://…" aria-label="网络图片链接">
+              <button id="import-url" type="button">导入链接</button>
+            </div>
+            <span class="field-hint">可直接粘贴网页复制的图片，或粘贴图片链接后导入。</span>
+          </div>
           <label class="field">
             <span class="label-text">主题名称 <em>必填</em></span>
             <input id="title" name="title" type="text" maxlength="80" placeholder="例如：空之轨迹" required>
@@ -105,7 +110,7 @@
         <div class="preview-stage">
           <div id="preview-empty" class="preview-empty">
             <span class="preview-glyph" aria-hidden="true">◇</span>
-            <p>上传图片并填写标题<br>即可查看封面</p>
+            <p>选择、粘贴或导入图片并填写标题<br>即可查看封面</p>
           </div>
           <img id="preview-image" alt="生成的封面预览" hidden>
         </div>
@@ -118,4 +123,3 @@
   </main>
 </body>
 </html>
-

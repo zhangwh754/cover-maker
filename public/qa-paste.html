@@ -1,0 +1,51 @@
+<!doctype html>
+<html><head><meta charset="utf-8"></head><body>RUNNING
+<script>
+const waitFor = async (check, label) => {
+  for (let i = 0; i < 100; i++) {
+    if (check()) return;
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  throw new Error('Timeout: ' + label);
+};
+const frame = document.createElement('iframe');
+frame.src = '/';
+document.body.append(frame);
+frame.onload = async () => {
+  try {
+    const win = frame.contentWindow;
+    const doc = frame.contentDocument;
+    const title = doc.getElementById('title');
+    title.value = '粘贴测试';
+    title.dispatchEvent(new win.Event('input', { bubbles: true }));
+    const bytes = await (await fetch('/qa-source.png')).arrayBuffer();
+    const file = new win.File([bytes], 'copied.png', { type: 'image/png' });
+    const files = new win.DataTransfer();
+    files.items.add(file);
+    doc.dispatchEvent(new win.ClipboardEvent('paste', {
+      clipboardData: files, bubbles: true, cancelable: true
+    }));
+    await waitFor(() => doc.getElementById('file-name').textContent.includes('已粘贴图片'), 'clipboard label');
+    await waitFor(() => !doc.getElementById('preview-image').hidden, 'clipboard preview');
+    doc.getElementById('index').value = '876542';
+    doc.getElementById('generate').click();
+    await waitFor(() => doc.getElementById('message').textContent.includes('已生成'), 'clipboard export');
+
+    const url = doc.getElementById('image-url');
+    const text = new win.DataTransfer();
+    text.setData('text/plain', 'https://raw.githubusercontent.com/github/explore/main/topics/nodejs/nodejs.png');
+    url.dispatchEvent(new win.ClipboardEvent('paste', {
+      clipboardData: text, bubbles: true, cancelable: true
+    }));
+    await waitFor(() => doc.getElementById('file-name').textContent.includes('网络图片'), 'network label');
+    await waitFor(() => !doc.getElementById('preview-image').hidden, 'network preview');
+    doc.getElementById('index').value = '876543';
+    doc.getElementById('generate').click();
+    await waitFor(() => doc.getElementById('message').textContent.includes('已生成'), 'network export');
+    document.body.textContent = 'PASS clipboard image and network URL paste with preview and export';
+  } catch (error) {
+    document.body.textContent = 'FAIL ' + error.message;
+  }
+};
+</script></body></html>
+
