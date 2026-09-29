@@ -2,6 +2,7 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { renderCover, type ImageSource } from './render.js';
+import { encodeCover, extensionFor, outputFormatSchema, type OutputFormat } from './output.js';
 import { coverOptionsSchema, type CoverOptions } from './schema.js';
 
 export interface SaveCoverRequest {
@@ -9,6 +10,7 @@ export interface SaveCoverRequest {
   sourceName: string;
   options: Omit<CoverOptions, 'index'>;
   index?: number;
+  format?: OutputFormat;
   outputDir: string;
   sequencePath: string;
 }
@@ -90,10 +92,11 @@ function safeStem(name: string): string {
 
 async function saveWithIndex(request: SaveCoverRequest, index: number): Promise<SaveCoverResult> {
   const options = coverOptionsSchema.parse({ ...request.options, index });
+  const format = outputFormatSchema.parse(request.format ?? 'png');
   const filename = String(index).padStart(3, '0') + '-' + options.type + '-' +
-    safeStem(request.sourceName) + '.png';
+    safeStem(request.sourceName) + extensionFor(format);
   const outputPath = path.join(request.outputDir, filename);
-  const buffer = await renderCover(request.source, options);
+  const buffer = await encodeCover(await renderCover(request.source, options), format);
   await fs.mkdir(request.outputDir, { recursive: true });
   await fs.writeFile(outputPath, buffer, { flag: 'wx' });
   return { index, filename, path: outputPath };
@@ -113,4 +116,5 @@ export async function saveCover(request: SaveCoverRequest): Promise<SaveCoverRes
     }
   });
 }
+
 

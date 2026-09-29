@@ -25,6 +25,8 @@ function updateControls() {
       Math.round(Number(document.getElementById(id).value) * 100) + '%';
   }
   fileName.textContent = imageInput.files[0] ? imageInput.files[0].name : '';
+  document.getElementById('format-label').textContent =
+    document.getElementById('format').value.toUpperCase() + ' · 3:4';
 }
 
 async function refreshIndex() {
@@ -129,3 +131,4 @@ form.addEventListener('submit', async (event) => {
 
 updateControls();
 refreshIndex();
+

@@ -5,6 +5,7 @@ import { ZodError } from 'zod';
 import { renderCover } from './render.js';
 import { CoverInputError } from './errors.js';
 import { coverOptionsSchema } from './schema.js';
+import { encodeCover, outputFormatSchema } from './output.js';
 import { peekNextIndex, saveCover } from './sequence.js';
 
 export interface AppConfig {
@@ -52,8 +53,11 @@ export function createApp(config: AppConfig): Express {
       return;
     }
     const index = numberField(request.body.index, await peekNextIndex(config.sequencePath));
-    const result = await renderCover(request.file.buffer, formOptions(request.body, index!));
-    response.type('png').set('Cache-Control', 'no-store').send(result);
+    const format = outputFormatSchema.parse(request.body.format || 'png');
+    const result = await encodeCover(
+      await renderCover(request.file.buffer, formOptions(request.body, index!)), format
+    );
+    response.type(format === 'jpeg' ? 'jpeg' : 'png').set('Cache-Control', 'no-store').send(result);
   });
 
   app.post('/api/covers', upload.single('image'), async (request, response) => {
@@ -73,6 +77,7 @@ export function createApp(config: AppConfig): Express {
         crop: options.crop
       },
       index: requestedIndex,
+      format: outputFormatSchema.parse(request.body.format || 'png'),
       outputDir: config.outputDir,
       sequencePath: config.sequencePath
     });
@@ -86,7 +91,7 @@ export function createApp(config: AppConfig): Express {
   app.get('/api/covers/:filename', (request, response) => {
     const filename = request.params.filename;
     if (typeof filename !== 'string' ||
-        !/^\d{3,6}-(anime|game|tv|life|coding)-[\p{L}\p{N}-]+\.png$/u.test(filename)) {
+        !/^\d{3,6}-(anime|game|tv|life|coding)-[\p{L}\p{N}-]+\.(png|jpg)$/u.test(filename)) {
       response.status(404).json({ error: '文件不存在' });
       return;
     }
@@ -112,5 +117,7 @@ export function createApp(config: AppConfig): Express {
   app.use(errorHandler);
   return app;
 }
+
+
 
 

@@ -15,6 +15,7 @@ program
   .option('--crop <mode>', 'contain（完整显示）或 cover（铺满裁切）', 'contain')
   .option('--x <number>', '铺满时的水平焦点，0 到 1', '0.5')
   .option('--y <number>', '铺满时的垂直焦点，0 到 1', '0.5')
+  .option('--format <format>', 'png 或 jpeg', 'png')
   .option('--output <dir>', '输出目录', 'output')
   .option('--sequence <file>', '自动编号文件', 'data/sequence.json')
   .parse();
@@ -36,6 +37,7 @@ try {
       }
     },
     index: args.index === undefined ? undefined : Number(args.index),
+    format: args.format,
     outputDir: path.resolve(args.output),
     sequencePath: path.resolve(args.sequence)
   });
@@ -51,3 +53,4 @@ try {
   }
   process.exitCode = 1;
 }
+

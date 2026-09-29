@@ -53,8 +53,32 @@ test('Web preview and export share rendering while preview leaves the sequence u
     assert.equal(downloadResponse.status, 200);
     const download = Buffer.from(await downloadResponse.arrayBuffer());
     assert.deepEqual(download, preview);
+
+    const jpegPreviewForm = form();
+    jpegPreviewForm.append('format', 'jpeg');
+    jpegPreviewForm.append('index', '42');
+    const jpegPreviewResponse = await fetch(base + '/api/preview', {
+      method: 'POST', body: jpegPreviewForm
+    });
+    assert.equal(jpegPreviewResponse.status, 200);
+    const jpegPreview = Buffer.from(await jpegPreviewResponse.arrayBuffer());
+    assert.equal((await sharp(jpegPreview).metadata()).format, 'jpeg');
+
+    const jpegExportForm = form();
+    jpegExportForm.append('format', 'jpeg');
+    jpegExportForm.append('index', '42');
+    const jpegExportResponse = await fetch(base + '/api/covers', {
+      method: 'POST', body: jpegExportForm
+    });
+    assert.equal(jpegExportResponse.status, 201);
+    const jpegExport = await jpegExportResponse.json();
+    assert.equal(jpegExport.filename, '042-game-sample.jpg');
+    const jpegDownload = Buffer.from(await (await fetch(base + jpegExport.url)).arrayBuffer());
+    assert.deepEqual(jpegDownload, jpegPreview);
+    assert.equal((await (await fetch(base + '/api/sequence')).json()).nextIndex, 2);
   } finally {
     await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
     await rm(root, { recursive: true, force: true });
   }
 });
+

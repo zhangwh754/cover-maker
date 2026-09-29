@@ -73,6 +73,13 @@
             <span class="field-hint">带标志或文字的海报，建议先用“完整显示”。</span>
           </div>
 
+          <label class="field">
+            <span class="label-text">导出格式</span>
+            <select id="format" name="format">
+              <option value="png" selected>PNG · 无损</option>
+              <option value="jpeg">JPEG · 高质量</option>
+            </select>
+          </label>
           <div id="focus-controls" class="focus-controls" hidden>
             <label class="field">
               <span class="label-text">水平焦点 <output id="x-value">50%</output></span>
@@ -104,10 +111,11 @@
         </div>
         <div class="preview-footer">
           <span>1080 × 1440 PX</span>
-          <span>PNG · 3:4</span>
+          <span id="format-label">PNG · 3:4</span>
         </div>
       </section>
     </div>
   </main>
 </body>
 </html>
+
