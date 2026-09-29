@@ -43,6 +43,13 @@ test('Web preview and export share rendering while preview leaves the sequence u
     assert.equal((await sharp(preview).metadata()).width, 1080);
     assert.equal((await (await fetch(base + '/api/sequence')).json()).nextIndex, 1);
 
+    const badForm = new FormData();
+    badForm.append('image', new Blob([new Uint8Array([1, 2, 3])], { type: 'image/jpeg' }), 'broken.jpg');
+    badForm.append('title', '坏图');
+    badForm.append('type', 'game');
+    const badResponse = await fetch(base + '/api/preview', { method: 'POST', body: badForm });
+    assert.equal(badResponse.status, 400);
+
     const exportResponse = await fetch(base + '/api/covers', { method: 'POST', body: form() });
     assert.equal(exportResponse.status, 201);
     const exported = await exportResponse.json();
@@ -81,4 +88,5 @@ test('Web preview and export share rendering while preview leaves the sequence u
     await rm(root, { recursive: true, force: true });
   }
 });
+
 

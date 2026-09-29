@@ -17,6 +17,7 @@ export const CATEGORIES = {
 } as const;
 
 export const FONT = {
-  serif: 'Noto Serif CJK SC',
-  sans: 'Noto Sans CJK SC'
+  serif: 'Noto Serif SC',
+  sans: 'Noto Sans SC'
 } as const;
+

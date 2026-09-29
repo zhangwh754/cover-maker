@@ -8,3 +8,5 @@ data/sequence.json
 data/*.lock
 data/*.tmp
 *.log
+data/font-cache/
+

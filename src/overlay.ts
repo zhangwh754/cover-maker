@@ -1,3 +1,4 @@
+import './font-environment.js';
 import sharp from 'sharp';
 import { CoverInputError } from './errors.js';
 import { CATEGORIES, DESIGN, FONT } from './config.js';
@@ -109,5 +110,6 @@ export async function createOverlay(options: CoverOptions): Promise<Buffer> {
   parts.push('</svg>');
   return Buffer.from(parts.join(''), 'utf8');
 }
+
 
 

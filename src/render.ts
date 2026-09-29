@@ -1,3 +1,4 @@
+import './font-environment.js';
 import sharp from 'sharp';
 import { DESIGN } from './config.js';
 import { CoverInputError } from './errors.js';
@@ -10,7 +11,9 @@ const ALLOWED_FORMATS = new Set(['jpeg', 'png', 'webp', 'avif', 'tiff']);
 export type ImageSource = string | Buffer;
 
 async function prepareImage(source: ImageSource, options: CoverOptions): Promise<Buffer> {
-  const metadata = await sharp(source, { limitInputPixels: INPUT_PIXEL_LIMIT }).metadata();
+  const metadata = await sharp(source, { limitInputPixels: INPUT_PIXEL_LIMIT })
+    .metadata()
+    .catch(() => { throw new CoverInputError('无法读取图片，或图片像素过大'); });
   if (!metadata.format || !ALLOWED_FORMATS.has(metadata.format)) {
     throw new CoverInputError('只支持 JPEG、PNG、WebP、AVIF 和 TIFF 图片');
   }
@@ -18,7 +21,8 @@ async function prepareImage(source: ImageSource, options: CoverOptions): Promise
   const oriented = await sharp(source, { limitInputPixels: INPUT_PIXEL_LIMIT })
     .autoOrient()
     .png()
-    .toBuffer();
+    .toBuffer()
+    .catch(() => { throw new CoverInputError('图片解码失败，请检查文件'); });
   const { width, height } = await sharp(oriented).metadata();
   if (!width || !height) throw new CoverInputError('无法读取图片尺寸');
 
@@ -74,4 +78,3 @@ export async function renderCover(source: ImageSource, rawOptions: unknown): Pro
     .png()
     .toBuffer();
 }
-
