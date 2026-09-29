@@ -1,5 +1,6 @@
 import sharp from 'sharp';
 import { DESIGN } from './config.js';
+import { CoverInputError } from './errors.js';
 import { createOverlay } from './overlay.js';
 import { coverOptionsSchema, type CoverOptions } from './schema.js';
 
@@ -11,7 +12,7 @@ export type ImageSource = string | Buffer;
 async function prepareImage(source: ImageSource, options: CoverOptions): Promise<Buffer> {
   const metadata = await sharp(source, { limitInputPixels: INPUT_PIXEL_LIMIT }).metadata();
   if (!metadata.format || !ALLOWED_FORMATS.has(metadata.format)) {
-    throw new Error('只支持 JPEG、PNG、WebP、AVIF 和 TIFF 图片');
+    throw new CoverInputError('只支持 JPEG、PNG、WebP、AVIF 和 TIFF 图片');
   }
 
   const oriented = await sharp(source, { limitInputPixels: INPUT_PIXEL_LIMIT })
@@ -19,7 +20,7 @@ async function prepareImage(source: ImageSource, options: CoverOptions): Promise
     .png()
     .toBuffer();
   const { width, height } = await sharp(oriented).metadata();
-  if (!width || !height) throw new Error('无法读取图片尺寸');
+  if (!width || !height) throw new CoverInputError('无法读取图片尺寸');
 
   if (options.crop.mode === 'contain') {
     return sharp(oriented)
@@ -73,3 +74,4 @@ export async function renderCover(source: ImageSource, rawOptions: unknown): Pro
     .png()
     .toBuffer();
 }
+

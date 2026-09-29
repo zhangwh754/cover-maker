@@ -1,4 +1,5 @@
 import sharp from 'sharp';
+import { CoverInputError } from './errors.js';
 import { CATEGORIES, DESIGN, FONT } from './config.js';
 import type { CoverOptions } from './schema.js';
 
@@ -59,14 +60,14 @@ export async function layoutTitle(title: string): Promise<TitleLayout> {
       }
     }
   }
-  throw new Error('标题放不进模板，请提供更短的封面标题');
+  throw new CoverInputError('标题放不进模板，请提供更短的封面标题');
 }
 
 async function subtitleSize(subtitle: string): Promise<number> {
   for (const size of [34, 31, 28, 25, 22]) {
     if (await textWidth(subtitle, FONT.sans, size) <= DESIGN.textMaxWidth) return size;
   }
-  throw new Error('副标题放不进模板，请缩短副标题');
+  throw new CoverInputError('副标题放不进模板，请缩短副标题');
 }
 
 function svgText(text: string, x: number, y: number, size: number, family: string, fill: string, extra = ''): string {
@@ -108,4 +109,5 @@ export async function createOverlay(options: CoverOptions): Promise<Buffer> {
   parts.push('</svg>');
   return Buffer.from(parts.join(''), 'utf8');
 }
+
 

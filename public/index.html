@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>每日推荐 · 封面生成器</title>
+  <link rel="stylesheet" href="/style.css">
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <main class="shell">
+    <header class="page-header">
+      <div class="brand-mark" aria-hidden="true">日<br>推</div>
+      <div>
+        <p class="eyebrow">DAILY RECOMMEND / COVER STUDIO</p>
+        <h1>每日推荐封面生成器</h1>
+        <p class="intro">保留原作的样子，加入统一的留白与排版。</p>
+      </div>
+      <span class="edition">01 / LITERARY</span>
+    </header>
+
+    <div class="workspace">
+      <section class="panel controls" aria-labelledby="controls-title">
+        <div class="section-heading">
+          <span class="section-number">01</span>
+          <h2 id="controls-title">封面内容</h2>
+        </div>
+        <form id="cover-form">
+          <label class="field">
+            <span class="label-text">原始图片 <em>必填</em></span>
+            <span class="upload-box">
+              <input id="image" name="image" type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/tiff" required>
+              <span class="upload-title">选择一张封面图片</span>
+              <span class="upload-hint">JPG / PNG / WEBP / AVIF / TIFF · 最大 20 MB</span>
+              <span id="file-name" class="file-name"></span>
+            </span>
+          </label>
+
+          <label class="field">
+            <span class="label-text">主题名称 <em>必填</em></span>
+            <input id="title" name="title" type="text" maxlength="80" placeholder="例如：空之轨迹" required>
+            <span class="field-hint">标题较长时会自动尝试换成两行。</span>
+          </label>
+
+          <label class="field">
+            <span class="label-text">副标题 <small>可选</small></span>
+            <input id="subtitle" name="subtitle" type="text" maxlength="80" placeholder="例如：the 2nd">
+          </label>
+
+          <div class="field-row">
+            <label class="field">
+              <span class="label-text">分类</span>
+              <select id="type" name="type">
+                <option value="anime">动漫</option>
+                <option value="game" selected>游戏</option>
+                <option value="tv">影视</option>
+                <option value="life">生活</option>
+                <option value="coding">编程</option>
+              </select>
+            </label>
+            <label class="field">
+              <span class="label-text">编号 <small>留空自动</small></span>
+              <input id="index" name="index" type="number" min="1" max="999999" placeholder="自动 001">
+            </label>
+          </div>
+
+          <div class="field">
+            <span class="label-text">图片适配</span>
+            <div class="segmented">
+              <label><input type="radio" name="crop" value="contain" checked><span>完整显示</span></label>
+              <label><input type="radio" name="crop" value="cover"><span>铺满裁切</span></label>
+            </div>
+            <span class="field-hint">带标志或文字的海报，建议先用“完整显示”。</span>
+          </div>
+
+          <div id="focus-controls" class="focus-controls" hidden>
+            <label class="field">
+              <span class="label-text">水平焦点 <output id="x-value">50%</output></span>
+              <input id="x" name="x" type="range" min="0" max="1" step="0.01" value="0.5">
+            </label>
+            <label class="field">
+              <span class="label-text">垂直焦点 <output id="y-value">50%</output></span>
+              <input id="y" name="y" type="range" min="0" max="1" step="0.01" value="0.5">
+            </label>
+          </div>
+
+          <button id="generate" class="generate-button" type="submit">生成封面 <span aria-hidden="true">↗</span></button>
+          <p id="message" class="message" role="status" aria-live="polite"></p>
+        </form>
+      </section>
+
+      <section class="panel preview-panel" aria-labelledby="preview-title">
+        <div class="section-heading">
+          <span class="section-number">02</span>
+          <h2 id="preview-title">实时预览</h2>
+          <span class="preview-note">与导出使用相同的渲染程序</span>
+        </div>
+        <div class="preview-stage">
+          <div id="preview-empty" class="preview-empty">
+            <span class="preview-glyph" aria-hidden="true">◇</span>
+            <p>上传图片并填写标题<br>即可查看封面</p>
+          </div>
+          <img id="preview-image" alt="生成的封面预览" hidden>
+        </div>
+        <div class="preview-footer">
+          <span>1080 × 1440 PX</span>
+          <span>PNG · 3:4</span>
+        </div>
+      </section>
+    </div>
+  </main>
+</body>
+</html>
