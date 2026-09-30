@@ -69,7 +69,7 @@
             </label>
           </div>
 
-          <div class="field">
+          <div id="crop-settings" class="field">
             <span class="label-text">图片适配</span>
             <div class="segmented">
               <label><input type="radio" name="crop" value="contain" checked><span>完整显示</span></label>
@@ -96,12 +96,17 @@
             </label>
           </div>
 
+          <a class="preview-shortcut" href="#preview-panel">查看预览 ↓</a>
           <button id="generate" class="generate-button" type="submit">生成封面 <span aria-hidden="true">↗</span></button>
           <p id="message" class="message" role="status" aria-live="polite"></p>
         </form>
+        <section id="export-results" class="export-results" aria-labelledby="export-title" hidden>
+          <h3 id="export-title">本次生成记录</h3>
+          <ul id="export-list"></ul>
+        </section>
       </section>
 
-      <section class="panel preview-panel" aria-labelledby="preview-title">
+      <section id="preview-panel" class="panel preview-panel" aria-labelledby="preview-title">
         <div class="section-heading">
           <span class="section-number">02</span>
           <h2 id="preview-title">实时预览</h2>
@@ -110,10 +115,12 @@
         <div class="preview-stage">
           <div id="preview-empty" class="preview-empty">
             <span class="preview-glyph" aria-hidden="true">◇</span>
-            <p>选择、粘贴或导入图片并填写标题<br>即可查看封面</p>
+            <p id="preview-empty-text">选择、粘贴或导入图片并填写标题<br>即可查看封面</p>
           </div>
           <img id="preview-image" alt="生成的封面预览" hidden>
         </div>
+        <p id="preview-message" class="message" role="status" aria-live="polite"></p>
+        <a class="preview-shortcut" href="#crop-settings">返回调整图片 ↑</a>
         <div class="preview-footer">
           <span>1080 × 1440 PX</span>
           <span id="format-label">PNG · 3:4</span>

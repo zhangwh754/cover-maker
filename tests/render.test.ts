@@ -56,3 +56,15 @@ test('long titles use two lines', async () => {
   assert.ok(layout.fontSize >= 40);
 });
 
+test('renders AVIF sources reported as HEIF with AV1 compression', async () => {
+  const source = await sharp(await sourceImage()).avif().toBuffer();
+  const metadata = await sharp(source).metadata();
+  assert.equal(metadata.format, 'heif');
+  assert.equal(metadata.compression, 'av1');
+  const output = await renderCover(source, { title: 'AVIF 测试', type: 'game', index: 3 });
+  const result = await sharp(output).metadata();
+  assert.equal(result.format, 'png');
+  assert.equal(result.width, 1080);
+  assert.equal(result.height, 1440);
+});
+

@@ -105,8 +105,18 @@ async function saveWithIndex(request: SaveCoverRequest, index: number): Promise<
 export async function saveCover(request: SaveCoverRequest): Promise<SaveCoverResult> {
   if (request.index !== undefined) return saveWithIndex(request, request.index);
   return withLock(request.sequencePath, async () => {
-    const index = await peekNextIndex(request.sequencePath);
-    const result = await saveWithIndex(request, index);
+    let index = await peekNextIndex(request.sequencePath);
+    let result: SaveCoverResult;
+    for (;;) {
+      try {
+        result = await saveWithIndex(request, index);
+        break;
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error;
+        // Manual exports do not advance the counter, but must not block it.
+        index++;
+      }
+    }
     try {
       await writeLastIndex(request.sequencePath, index);
       return result;

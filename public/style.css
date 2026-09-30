@@ -29,7 +29,7 @@ h1 {
 .workspace { display: grid; grid-template-columns: minmax(360px, 0.9fr) minmax(440px, 1.1fr); gap: 20px; align-items: start; }
 .panel { background: #f8f6f0; border: 1px solid #ddd9ce; min-width: 0; }
 .controls { padding: 28px 34px 34px; }
-.preview-panel { padding: 28px 34px 22px; }
+.preview-panel { padding: 28px 34px 22px; position: sticky; top: 20px; }
 .section-heading { display: flex; align-items: baseline; gap: 15px; border-bottom: 1px solid #d8d4ca; padding-bottom: 17px; margin-bottom: 26px; }
 .section-number { color: #35536b; }
 h2 { font-family: "Noto Serif CJK SC", "Songti SC", serif; font-weight: 500; font-size: 21px; margin: 0; letter-spacing: 2px; }
@@ -70,6 +70,14 @@ input[type="range"] { width: 100%; accent-color: #35536b; }
 .message { min-height: 20px; font-size: 12px; color: #5f5c53; margin: 13px 0 0; line-height: 1.5; }
 .message.error { color: #ad4d42; }
 .message a { color: #244d6f; font-weight: 600; }
+.export-results { border-top: 1px solid #d8d4ca; margin-top: 20px; padding-top: 16px; }
+.export-results h3 { font-size: 13px; font-weight: 500; margin: 0 0 12px; }
+.export-results ul { list-style: none; margin: 0; padding: 0; }
+.export-results li { display: flex; align-items: baseline; gap: 12px; margin-top: 10px; font-size: 12px; }
+.export-results li span { min-width: 0; flex: 1; overflow-wrap: anywhere; color: #5f5c53; }
+.export-results a { flex: 0 0 auto; color: #244d6f; font-weight: 600; }
+.preview-shortcut { display: none; color: #244d6f; font-size: 13px; padding: 12px 0; }
+#preview-panel, #crop-settings { scroll-margin-top: 20px; }
 .preview-stage { min-height: 560px; padding: 20px; background: #e8e5dd; display: flex; align-items: center; justify-content: center; }
 .preview-stage img { width: min(100%, 420px); max-height: 72vh; object-fit: contain; box-shadow: 0 15px 40px #3e3c341c; }
 .preview-empty { display: flex; flex-direction: column; align-items: center; gap: 13px; color: #979388; text-align: center; font-size: 13px; line-height: 1.8; }
@@ -85,11 +93,14 @@ input[type="range"] { width: 100%; accent-color: #35536b; }
   background: #e8eeeb; color: #2d5151; cursor: pointer; font-size: 12px;
 }
 .remote-row button:hover { background: #dce7e1; }
-.remote-row button:disabled { opacity: 0.6; cursor: wait; }@media (max-width: 900px) {
+.remote-row button:disabled { opacity: 0.6; cursor: wait; }
+@media (max-width: 900px) {
   .shell { padding: 25px 18px 48px; }
   .workspace { grid-template-columns: 1fr; }
   .edition { display: none; }
   .preview-stage { min-height: 420px; }
+  .preview-panel { position: static; }
+  .preview-shortcut { display: inline-block; }
 }
 @media (max-width: 520px) {
   .page-header { align-items: flex-start; gap: 15px; }

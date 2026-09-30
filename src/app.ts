@@ -8,6 +8,7 @@ import { coverOptionsSchema } from './schema.js';
 import { encodeCover, outputFormatSchema } from './output.js';
 import { peekNextIndex, saveCover } from './sequence.js';
 import { importRemoteImage, RemoteImageError } from './remote-image.js';
+import { IMAGE_MIME } from './image-format.js';
 
 export interface AppConfig {
   outputDir: string;
@@ -46,15 +47,8 @@ export function createApp(config: AppConfig): Express {
 
   app.post('/api/import-image', express.json({ limit: '8kb' }), async (request, response) => {
     const imported = await importRemoteImage(request.body?.url);
-    const mime = {
-      jpeg: 'image/jpeg',
-      png: 'image/png',
-      webp: 'image/webp',
-      avif: 'image/avif',
-      tiff: 'image/tiff'
-    }[imported.format];
     response.set('Cache-Control', 'no-store').set('X-Content-Type-Options', 'nosniff')
-      .type(mime).send(imported.bytes);
+      .type(IMAGE_MIME[imported.format]).send(imported.bytes);
   });
   app.get('/api/sequence', async (_request, response) => {
     response.json({ nextIndex: await peekNextIndex(config.sequencePath) });
@@ -111,7 +105,11 @@ export function createApp(config: AppConfig): Express {
     response.download(path.join(config.outputDir, filename));
   });
 
-  const errorHandler: ErrorRequestHandler = (error: unknown, _request, response, _next) => {
+  const errorHandler: ErrorRequestHandler = (error: unknown, _request, response, next) => {
+    if (response.headersSent) {
+      next(error);
+      return;
+    }
     if (error instanceof ZodError) {
       response.status(400).json({
         error: error.issues.map((issue) => issue.path.join('.') + '：' + issue.message).join('；')
@@ -125,8 +123,15 @@ export function createApp(config: AppConfig): Express {
     } else if ((error as NodeJS.ErrnoException).code === 'EEXIST') {
       response.status(409).json({ error: '该编号的文件已存在，请更换编号' });
     } else {
-      console.error(error);
-      response.status(500).json({ error: error instanceof Error ? error.message : '生成失败' });
+      const status = (error as { status?: number }).status;
+      if (status && Number.isInteger(status) && status >= 400 && status < 500) {
+        const text = status === 404 ? '文件不存在' : status === 413 ? '请求内容过大' :
+          status === 400 ? '请求格式无效，请检查 JSON 或表单内容' : '请求无法处理';
+        response.status(status).json({ error: text });
+      } else {
+        console.error(error);
+        response.status(500).json({ error: '生成失败，请稍后重试' });
+      }
     }
   };
   app.use(errorHandler);

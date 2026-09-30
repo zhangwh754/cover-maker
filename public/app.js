@@ -4,11 +4,16 @@ const uploadBox = document.getElementById('upload-box');
 const imageUrlInput = document.getElementById('image-url');
 const importButton = document.getElementById('import-url');
 const titleInput = document.getElementById('title');
+const formatInput = document.getElementById('format');
 const indexInput = document.getElementById('index');
 const cropInputs = document.querySelectorAll('input[name="crop"]');
 const focusControls = document.getElementById('focus-controls');
 const previewImage = document.getElementById('preview-image');
 const previewEmpty = document.getElementById('preview-empty');
+const previewEmptyText = document.getElementById('preview-empty-text');
+const previewMessage = document.getElementById('preview-message');
+const exportResults = document.getElementById('export-results');
+const exportList = document.getElementById('export-list');
 const fileName = document.getElementById('file-name');
 const message = document.getElementById('message');
 const generateButton = document.getElementById('generate');
@@ -23,6 +28,8 @@ let previewTimer;
 let previewController;
 let previewUrl;
 let previewSerial = 0;
+let formRevision = 0;
+let generating = false;
 
 function selectedCrop() {
   return document.querySelector('input[name="crop"]:checked').value;
@@ -37,12 +44,55 @@ function updateControls() {
   fileName.textContent = selectedImageLabel;
   uploadBox.classList.toggle('has-image', Boolean(selectedImageFile));
   document.getElementById('format-label').textContent =
-    document.getElementById('format').value.toUpperCase() + ' · 3:4';
+    formatInput.value.toUpperCase() + ' · 3:4';
 }
 
 function setMessage(text, isError) {
   message.textContent = text;
   message.classList.toggle('error', Boolean(isError));
+}
+
+function setPreviewMessage(text, isError) {
+  previewMessage.textContent = text;
+  previewMessage.classList.toggle('error', Boolean(isError));
+}
+
+function cancelPreview() {
+  clearTimeout(previewTimer);
+  if (previewController) previewController.abort();
+  previewController = undefined;
+  previewSerial++;
+}
+
+function clearPreview(text = '选择、粘贴或导入图片并填写标题，即可查看封面') {
+  previewImage.hidden = true;
+  previewImage.removeAttribute('src');
+  previewEmpty.hidden = false;
+  previewEmptyText.textContent = text;
+  if (previewUrl) URL.revokeObjectURL(previewUrl);
+  previewUrl = undefined;
+}
+
+function showPreview(blob) {
+  const nextUrl = URL.createObjectURL(blob);
+  previewImage.src = nextUrl;
+  previewImage.hidden = false;
+  previewEmpty.hidden = true;
+  if (previewUrl) URL.revokeObjectURL(previewUrl);
+  previewUrl = nextUrl;
+  setPreviewMessage('', false);
+}
+
+function addExportResult(data, format) {
+  const item = document.createElement('li');
+  const name = document.createElement('span');
+  name.textContent = data.filename;
+  const link = document.createElement('a');
+  link.href = data.url;
+  link.textContent = '下载 ' + format.toUpperCase();
+  item.append(name, link);
+  exportList.prepend(item);
+  exportResults.hidden = false;
 }
 
 function errorText(error) {
@@ -106,14 +156,15 @@ function formData() {
 }
 
 async function preview() {
+  cancelPreview();
   if (!selectedImageFile || !titleInput.value.trim()) {
-    previewImage.hidden = true;
-    previewEmpty.hidden = false;
+    clearPreview();
+    setPreviewMessage('', false);
     return;
   }
-  if (previewController) previewController.abort();
+  clearPreview('正在更新预览…');
   previewController = new AbortController();
-  const current = ++previewSerial;
+  const current = previewSerial;
   try {
     const response = await fetch('/api/preview', {
       method: 'POST',
@@ -126,23 +177,24 @@ async function preview() {
     }
     const blob = await response.blob();
     if (current !== previewSerial) return;
-    const nextUrl = URL.createObjectURL(blob);
-    previewImage.src = nextUrl;
-    previewImage.hidden = false;
-    previewEmpty.hidden = true;
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
-    previewUrl = nextUrl;
-    setMessage('', false);
+    showPreview(blob);
   } catch (error) {
     if (error.name === 'AbortError') return;
-    if (current === previewSerial) setMessage(errorText(error), true);
+    if (current === previewSerial) {
+      clearPreview('预览未生成，请调整内容后重试');
+      setPreviewMessage(errorText(error), true);
+    }
   }
 }
 
 function schedulePreview() {
+  formRevision++;
   updateControls();
-  clearTimeout(previewTimer);
-  previewTimer = setTimeout(preview, 350);
+  cancelPreview();
+  setPreviewMessage('', false);
+  const ready = selectedImageFile && titleInput.value.trim();
+  clearPreview(ready ? '正在更新预览…' : undefined);
+  if (ready) previewTimer = setTimeout(preview, 350);
 }
 
 function filenameFromUrl(value, type) {
@@ -281,48 +333,51 @@ for (const input of cropInputs) input.addEventListener('change', updateControls)
 
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
+  if (generating) return;
   if (!form.reportValidity()) return;
   if (importing) {
     setMessage('请等待网络图片导入完成', true);
     return;
   }
-  if (imageUrlInput.value.trim() && imageUrlInput.value.trim() !== importedUrl) {
-    if (!(await importImageUrl())) return;
-  }
-  if (!selectedImageFile) {
-    setMessage('请选择、粘贴或导入一张原始图片', true);
-    uploadBox.focus();
-    return;
-  }
+  generating = true;
   generateButton.disabled = true;
-  clearTimeout(previewTimer);
-  if (previewController) previewController.abort();
-  previewSerial++;
-  setMessage('正在生成封面…', false);
   try {
-    const response = await fetch('/api/covers', { method: 'POST', body: formData() });
+    if (imageUrlInput.value.trim() && imageUrlInput.value.trim() !== importedUrl) {
+      if (!(await importImageUrl())) return;
+    }
+    if (!selectedImageFile) {
+      setMessage('请选择、粘贴或导入一张原始图片', true);
+      uploadBox.focus();
+      return;
+    }
+    const requestData = formData();
+    const requestedFormat = requestData.get('format');
+    const revision = formRevision;
+    cancelPreview();
+    const current = previewSerial;
+    setMessage('正在生成封面…', false);
+    const response = await fetch('/api/covers', { method: 'POST', body: requestData });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || '生成失败');
-    message.classList.remove('error');
-    message.textContent = '已生成 ' + data.filename + ' · ';
-    const link = document.createElement('a');
-    link.href = data.url;
-    link.textContent = '下载 ' + document.getElementById('format').value.toUpperCase();
-    message.append(link);
+    addExportResult(data, requestedFormat);
+    setMessage('已生成 ' + data.filename, false);
     await refreshIndex();
-    const imageResponse = await fetch(data.url);
-    if (imageResponse.ok) {
+    if (revision !== formRevision || current !== previewSerial) return;
+    try {
+      const imageResponse = await fetch(data.url);
+      if (!imageResponse.ok) throw new Error('封面已生成，预览读取失败，请使用下载链接');
       const imageBlob = await imageResponse.blob();
-      const nextUrl = URL.createObjectURL(imageBlob);
-      previewImage.src = nextUrl;
-      previewImage.hidden = false;
-      previewEmpty.hidden = true;
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
-      previewUrl = nextUrl;
+      if (revision === formRevision && current === previewSerial) showPreview(imageBlob);
+    } catch (error) {
+      if (revision === formRevision && current === previewSerial) {
+        clearPreview('封面已生成，可从生成记录下载');
+        setPreviewMessage(errorText(error), true);
+      }
     }
   } catch (error) {
     setMessage(errorText(error), true);
   } finally {
+    generating = false;
     generateButton.disabled = false;
   }
 });

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import type { AddressInfo } from 'node:net';
 import os from 'node:os';
 import path from 'node:path';
@@ -89,6 +89,47 @@ test('Web preview and export share rendering while preview leaves the sequence u
     const jpegDownload = Buffer.from(await (await fetch(base + jpegExport.url)).arrayBuffer());
     assert.deepEqual(jpegDownload, jpegPreview);
     assert.equal((await (await fetch(base + '/api/sequence')).json()).nextIndex, 2);
+
+    const avif = await sharp(image).avif().toBuffer();
+    const avifForm = form();
+    avifForm.set('image', new Blob([new Uint8Array(avif)], { type: 'image/avif' }), 'sample.avif');
+    const avifPreviewResponse = await fetch(base + '/api/preview', { method: 'POST', body: avifForm });
+    assert.equal(avifPreviewResponse.status, 200);
+    assert.equal((await sharp(Buffer.from(await avifPreviewResponse.arrayBuffer())).metadata()).width, 1080);
+  } finally {
+    await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test('HTTP errors preserve client status codes and conceal internal paths', async (t) => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'cover-maker-errors-'));
+  const sequencePath = path.join(root, 'sequence.json');
+  const server = createApp({
+    outputDir: path.join(root, 'output'), sequencePath, publicDir: path.resolve('public')
+  }).listen(0, '127.0.0.1');
+  try {
+    await new Promise<void>((resolve) => server.once('listening', resolve));
+    const base = 'http://127.0.0.1:' + (server.address() as AddressInfo).port;
+    const missing = await fetch(base + '/api/covers/001-game-missing.png');
+    assert.equal(missing.status, 404);
+    assert.deepEqual(await missing.json(), { error: '文件不存在' });
+    const malformed = await fetch(base + '/api/import-image', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{'
+    });
+    assert.equal(malformed.status, 400);
+    assert.match((await malformed.json()).error, /请求格式无效/);
+    const oversized = await fetch(base + '/api/import-image', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: 'x'.repeat(9000) })
+    });
+    assert.equal(oversized.status, 413);
+    assert.deepEqual(await oversized.json(), { error: '请求内容过大' });
+    await writeFile(sequencePath, JSON.stringify({ global: 'invalid' }));
+    t.mock.method(console, 'error', () => {});
+    const internal = await fetch(base + '/api/sequence');
+    assert.equal(internal.status, 500);
+    assert.deepEqual(await internal.json(), { error: '生成失败，请稍后重试' });
   } finally {
     await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
     await rm(root, { recursive: true, force: true });

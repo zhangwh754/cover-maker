@@ -2,11 +2,11 @@ import './font-environment.js';
 import sharp from 'sharp';
 import { DESIGN } from './config.js';
 import { CoverInputError } from './errors.js';
+import { supportedImageFormat } from './image-format.js';
 import { createOverlay } from './overlay.js';
 import { coverOptionsSchema, type CoverOptions } from './schema.js';
 
 const INPUT_PIXEL_LIMIT = 25_000_000;
-const ALLOWED_FORMATS = new Set(['jpeg', 'png', 'webp', 'avif', 'tiff']);
 
 export type ImageSource = string | Buffer;
 
@@ -14,7 +14,7 @@ async function prepareImage(source: ImageSource, options: CoverOptions): Promise
   const metadata = await sharp(source, { limitInputPixels: INPUT_PIXEL_LIMIT })
     .metadata()
     .catch(() => { throw new CoverInputError('无法读取图片，或图片像素过大'); });
-  if (!metadata.format || !ALLOWED_FORMATS.has(metadata.format)) {
+  if (!supportedImageFormat(metadata)) {
     throw new CoverInputError('只支持 JPEG、PNG、WebP、AVIF 和 TIFF 图片');
   }
 

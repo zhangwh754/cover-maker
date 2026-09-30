@@ -1,9 +1,12 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import sharp from 'sharp';
+import { IMAGE_MIME, supportedImageFormat } from '../src/image-format.js';
 import {
   importRemoteImage,
   isPublicAddress,
   parseRemoteImageUrl,
+  validateImportedImage,
   RemoteImageError
 } from '../src/remote-image.js';
 
@@ -30,4 +33,17 @@ test('network image URLs accept only public HTTP(S) targets', async () => {
   ]) {
     await assert.rejects(() => importRemoteImage(value), RemoteImageError);
   }
+});
+
+test('remote AVIF bytes normalize to AVIF and its MIME without accepting HEIC', async () => {
+  const bytes = await sharp({
+    create: { width: 64, height: 64, channels: 3, background: '#345678' }
+  }).avif().toBuffer();
+  const imported = await validateImportedImage(bytes);
+  assert.equal(imported.format, 'avif');
+  assert.equal(IMAGE_MIME[imported.format], 'image/avif');
+  assert.deepEqual(imported.bytes, bytes);
+  assert.equal(supportedImageFormat({ format: 'heif', compression: 'hevc' }), undefined);
+  assert.equal(supportedImageFormat({ format: 'heif' }), undefined);
+  await assert.rejects(() => validateImportedImage(Buffer.from('not an image')), RemoteImageError);
 });

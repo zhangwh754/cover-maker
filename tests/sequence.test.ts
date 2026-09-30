@@ -56,3 +56,31 @@ test('concurrent automatic exports receive distinct numbers', async () => {
     await rm(root, { recursive: true, force: true });
   }
 });
+
+test('automatic exports skip occupied manual filenames without overwriting them', async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'cover-maker-collision-'));
+  try {
+    const source = await sharp({
+      create: { width: 64, height: 64, channels: 3, background: '#345678' }
+    }).png().toBuffer();
+    const request = {
+      source,
+      sourceName: 'sample.png',
+      options: { title: '测试', type: 'game' as const, crop: { mode: 'contain' as const, x: 0.5, y: 0.5 } },
+      outputDir: path.join(root, 'output'),
+      sequencePath: path.join(root, 'data', 'sequence.json')
+    };
+    const manual = await saveCover({ ...request, index: 1 });
+    await saveCover({ ...request, index: 2 });
+    const original = await readFile(manual.path);
+    assert.equal(await peekNextIndex(request.sequencePath), 1);
+    const automatic = await saveCover(request);
+    assert.equal(automatic.index, 3);
+    assert.equal(automatic.filename, '003-game-sample.png');
+    assert.equal(await peekNextIndex(request.sequencePath), 4);
+    assert.deepEqual(await readFile(manual.path), original);
+    await assert.rejects(() => saveCover({ ...request, index: 1 }), { code: 'EEXIST' });
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
