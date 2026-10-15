@@ -19,7 +19,7 @@ npm run dev
 npm run cover -- --image input/sora.jpg --title "空之轨迹" --subtitle "the 2nd" --type game
 ```
 
-输出默认放在 `output/`，文件名形如 `001-game-sora.png`。分类可选 `anime`、`game`、`tv`、`life`、`coding`。
+输出默认放在 `output/`，文件名形如 `001-game-sora.png`。分类支持自由输入（最多 20 字符），也可使用 `anime`、`game`、`tv`、`life`、`coding` 或对应中文预设。网页可以点击预设按钮填入分类，也可直接修改输入框。自定义分类使用统一配色；文件名中的分类会移除路径等特殊字符。
 
 常用参数：
 

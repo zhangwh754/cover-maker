@@ -1,7 +1,8 @@
 import './font-environment.js';
 import sharp from 'sharp';
 import { CoverInputError } from './errors.js';
-import { CATEGORIES, DESIGN, FONT } from './config.js';
+import { DESIGN, FONT } from './config.js';
+import { categoryDetails } from './category.js';
 import type { CoverOptions } from './schema.js';
 
 export function escapeXml(value: string): string {
@@ -43,20 +44,18 @@ export async function layoutTitle(title: string): Promise<TitleLayout> {
 
   const chars = graphemes(title);
   const midpoint = Math.floor(chars.length / 2);
+  const atWordBoundary = (split: number) => /\s/u.test(chars[split - 1]!) || /\s/u.test(chars[split]!);
   const splits = Array.from({ length: chars.length - 1 }, (_, i) => i + 1)
-    .sort((a, b) => Math.abs(a - midpoint) - Math.abs(b - midpoint))
-    .slice(0, 12);
+    .sort((a, b) => Number(atWordBoundary(b)) - Number(atWordBoundary(a)) ||
+      Math.abs(a - midpoint) - Math.abs(b - midpoint));
 
   for (const size of [64, 60, 56, 52, 48, 44, 40]) {
     for (const split of splits) {
       const first = chars.slice(0, split).join('').trim();
       const second = chars.slice(split).join('').trim();
       if (!first || !second) continue;
-      const [firstWidth, secondWidth] = await Promise.all([
-        textWidth(first, FONT.serif, size),
-        textWidth(second, FONT.serif, size)
-      ]);
-      if (Math.max(firstWidth, secondWidth) <= DESIGN.textMaxWidth) {
+      if (await textWidth(first, FONT.serif, size) > DESIGN.textMaxWidth) continue;
+      if (await textWidth(second, FONT.serif, size) <= DESIGN.textMaxWidth) {
         return { lines: [first, second], fontSize: size };
       }
     }
@@ -78,7 +77,7 @@ function svgText(text: string, x: number, y: number, size: number, family: strin
 
 export async function createOverlay(options: CoverOptions): Promise<Buffer> {
   const { title, subtitle, type, index } = options;
-  const category = CATEGORIES[type];
+  const category = categoryDetails(type);
   const titleLayout = await layoutTitle(title);
   const subtitleFontSize = subtitle ? await subtitleSize(subtitle) : undefined;
   const titleYs = titleLayout.lines.length === 1 ? [1190] : [1152, 1224];
@@ -96,7 +95,7 @@ export async function createOverlay(options: CoverOptions): Promise<Buffer> {
   parts.push('<line x1="75" y1="385" x2="112" y2="385" stroke="#333333" stroke-width="1"/>');
   parts.push('<path d="M219 1053 L231 1065 L219 1077 L207 1065 Z" fill="' + category.accent + '"/>');
   parts.push('<text x="245" y="1075" font-family="' + FONT.sans +
-    '" font-size="27" fill="#313131">' + category.label + '</text>');
+    '" font-size="27" fill="#313131">' + escapeXml(category.label) + '</text>');
 
   titleLayout.lines.forEach((line, i) => {
     parts.push(svgText(line, DESIGN.textCenterX, titleYs[i] ?? 1190, titleLayout.fontSize,

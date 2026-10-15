@@ -53,16 +53,19 @@
           </label>
 
           <div class="field-row">
-            <label class="field">
-              <span class="label-text">分类</span>
-              <select id="type" name="type">
-                <option value="anime">动漫</option>
-                <option value="game" selected>游戏</option>
-                <option value="tv">影视</option>
-                <option value="life">生活</option>
-                <option value="coding">编程</option>
-              </select>
-            </label>
+            <div class="field">
+              <label for="type" class="label-text">分类</label>
+              <input id="type" name="type" type="text" value="游戏" maxlength="20" required
+                placeholder="输入分类名称" aria-describedby="category-hint">
+              <span id="category-hint" class="field-hint">自由输入，或选择下方预设 · 最多 20 字符</span>
+              <span class="category-presets" role="group" aria-label="预设分类">
+                <button type="button" data-category="动漫" aria-pressed="false">动漫</button>
+                <button type="button" data-category="游戏" aria-pressed="true">游戏</button>
+                <button type="button" data-category="影视" aria-pressed="false">影视</button>
+                <button type="button" data-category="生活" aria-pressed="false">生活</button>
+                <button type="button" data-category="编程" aria-pressed="false">编程</button>
+              </span>
+            </div>
             <label class="field">
               <span class="label-text">编号 <small>留空自动</small></span>
               <input id="index" name="index" type="number" min="1" max="999999" placeholder="自动 001">

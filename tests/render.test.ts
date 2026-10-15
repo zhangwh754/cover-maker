@@ -3,6 +3,7 @@ import { test } from 'node:test';
 import sharp from 'sharp';
 import { layoutTitle } from '../src/overlay.js';
 import { renderCover } from '../src/render.js';
+import { DESIGN, FONT } from '../src/config.js';
 
 async function sourceImage(): Promise<Buffer> {
   const svg = Buffer.from(
@@ -54,6 +55,23 @@ test('long titles use two lines', async () => {
   const layout = await layoutTitle('塞尔达传说：王国之泪完全版游戏体验与推荐');
   assert.equal(layout.lines.length, 2);
   assert.ok(layout.fontSize >= 40);
+});
+
+test('mixed-width titles can break outside the character midpoint candidates', async () => {
+  const title = 'Ill '.repeat(9) + '这是一段用于封面排版验证的中文长标题';
+  const layout = await layoutTitle(title);
+  assert.equal(layout.lines.length, 2);
+  assert.match(layout.lines[0]!, /^Ill(?: Ill)*$/);
+  assert.equal(layout.lines.join('').replace(/\s/gu, ''), title.replace(/\s/gu, ''));
+  for (const line of layout.lines) {
+    const { info } = await sharp({ text: { text: line, font: FONT.serif + ' ' + layout.fontSize, rgba: true } })
+      .png().toBuffer({ resolveWithObject: true });
+    assert.ok(info.width <= DESIGN.textMaxWidth);
+  }
+});
+
+test('titles that cannot fit any two lines still return a useful input error', async () => {
+  await assert.rejects(() => layoutTitle('汉'.repeat(80)), /标题放不进模板/);
 });
 
 test('renders AVIF sources reported as HEIF with AV1 compression', async () => {

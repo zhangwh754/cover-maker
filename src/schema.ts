@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
-export const categorySchema = z.enum(['anime', 'game', 'tv', 'life', 'coding']);
+export const categorySchema = z.string().trim().min(1, '分类不能为空').max(20, '分类最多 20 个字符')
+  .regex(/^[^\u0000-\u001f\u007f]+$/u, '分类不能包含换行或控制字符');
 export const cropSchema = z.object({
   mode: z.enum(['contain', 'cover']).default('contain'),
   x: z.number().min(0).max(1).default(0.5),

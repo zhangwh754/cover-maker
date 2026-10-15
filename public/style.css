@@ -53,6 +53,10 @@ input::placeholder { color: #aaa79e; }
 .upload-hint { font-size: 11px; color: #918e85; margin-top: 7px; }
 .file-name { color: #35536b; font-size: 12px; margin-top: 8px; overflow-wrap: anywhere; }
 .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.category-presets { display: flex; flex-wrap: wrap; gap: 5px; }
+.category-presets button { border: 1px solid #d8d4c9; background: #fffefa; color: #6b695f; font-size: 12px; padding: 5px 8px; cursor: pointer; }
+.category-presets button[aria-pressed="true"] { border-color: #344f64; background: #344f64; color: #fff; }
+.category-presets button:focus-visible { outline: 2px solid #829bb0; outline-offset: 2px; }
 .segmented { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid #d8d4c9; }
 .segmented label { cursor: pointer; }
 .segmented input { position: absolute; opacity: 0; }

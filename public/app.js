@@ -4,6 +4,8 @@ const uploadBox = document.getElementById('upload-box');
 const imageUrlInput = document.getElementById('image-url');
 const importButton = document.getElementById('import-url');
 const titleInput = document.getElementById('title');
+const typeInput = document.getElementById('type');
+const categoryPresets = document.querySelectorAll('[data-category]');
 const formatInput = document.getElementById('format');
 const indexInput = document.getElementById('index');
 const cropInputs = document.querySelectorAll('input[name="crop"]');
@@ -45,6 +47,9 @@ function updateControls() {
   uploadBox.classList.toggle('has-image', Boolean(selectedImageFile));
   document.getElementById('format-label').textContent =
     formatInput.value.toUpperCase() + ' · 3:4';
+  for (const button of categoryPresets) {
+    button.setAttribute('aria-pressed', String(button.dataset.category === typeInput.value.trim()));
+  }
 }
 
 function setMessage(text, isError) {
@@ -330,6 +335,12 @@ form.addEventListener('change', (event) => {
   if (event.target !== imageInput && event.target !== imageUrlInput) schedulePreview();
 });
 for (const input of cropInputs) input.addEventListener('change', updateControls);
+for (const button of categoryPresets) {
+  button.addEventListener('click', () => {
+    typeInput.value = button.dataset.category;
+    schedulePreview();
+  });
+}
 
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
@@ -341,6 +352,8 @@ form.addEventListener('submit', async (event) => {
   }
   generating = true;
   generateButton.disabled = true;
+  let submittedRevision;
+  let submittedPreview;
   try {
     if (imageUrlInput.value.trim() && imageUrlInput.value.trim() !== importedUrl) {
       if (!(await importImageUrl())) return;
@@ -355,6 +368,8 @@ form.addEventListener('submit', async (event) => {
     const revision = formRevision;
     cancelPreview();
     const current = previewSerial;
+    submittedRevision = revision;
+    submittedPreview = current;
     setMessage('正在生成封面…', false);
     const response = await fetch('/api/covers', { method: 'POST', body: requestData });
     const data = await response.json();
@@ -376,6 +391,9 @@ form.addEventListener('submit', async (event) => {
     }
   } catch (error) {
     setMessage(errorText(error), true);
+    if (submittedRevision === formRevision && submittedPreview === previewSerial) {
+      void preview();
+    }
   } finally {
     generating = false;
     generateButton.disabled = false;

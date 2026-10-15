@@ -9,7 +9,7 @@ program
   .description('生成留白文艺系每日推荐封面')
   .requiredOption('-i, --image <path>', '原始封面图')
   .requiredOption('-t, --title <text>', '封面标题')
-  .requiredOption('--type <type>', 'anime / game / tv / life / coding')
+  .requiredOption('--type <type>', '预设分类代码或自定义分类名称（最多 20 字符）')
   .option('--subtitle <text>', '副标题')
   .option('--index <number>', '手动指定编号；不更新自动编号')
   .option('--crop <mode>', 'contain（完整显示）或 cover（铺满裁切）', 'contain')

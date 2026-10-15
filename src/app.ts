@@ -9,6 +9,7 @@ import { encodeCover, outputFormatSchema } from './output.js';
 import { peekNextIndex, saveCover } from './sequence.js';
 import { importRemoteImage, RemoteImageError } from './remote-image.js';
 import { IMAGE_MIME } from './image-format.js';
+import { decodeUploadFilename } from './filename.js';
 
 export interface AppConfig {
   outputDir: string;
@@ -76,7 +77,7 @@ export function createApp(config: AppConfig): Express {
     const options = coverOptionsSchema.parse(formOptions(request.body, requestedIndex ?? 1));
     const result = await saveCover({
       source: request.file.buffer,
-      sourceName: request.file.originalname,
+      sourceName: decodeUploadFilename(request.file.originalname),
       options: {
         title: options.title,
         subtitle: options.subtitle,
@@ -98,7 +99,7 @@ export function createApp(config: AppConfig): Express {
   app.get('/api/covers/:filename', (request, response) => {
     const filename = request.params.filename;
     if (typeof filename !== 'string' ||
-        !/^\d{3,6}-(anime|game|tv|life|coding)-[\p{L}\p{N}-]+\.(png|jpg)$/u.test(filename)) {
+        !/^\d{3,6}-[\p{L}\p{N}-]+\.(png|jpg)$/u.test(filename)) {
       response.status(404).json({ error: '文件不存在' });
       return;
     }

@@ -4,6 +4,8 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { renderCover, type ImageSource } from './render.js';
 import { encodeCover, extensionFor, outputFormatSchema, type OutputFormat } from './output.js';
 import { coverOptionsSchema, type CoverOptions } from './schema.js';
+import { categoryDetails } from './category.js';
+import { safeFilenamePart } from './filename.js';
 
 export interface SaveCoverRequest {
   source: ImageSource;
@@ -83,17 +85,13 @@ async function withLock<T>(sequencePath: string, operation: () => Promise<T>): P
   throw new Error('编号文件被其他进程占用，请稍后重试');
 }
 function safeStem(name: string): string {
-  const stem = path.basename(name, path.extname(name)).normalize('NFKC')
-    .replace(/[^\p{L}\p{N}-]+/gu, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 50);
-  return stem || 'cover';
+  return safeFilenamePart(path.basename(name, path.extname(name)), 'cover');
 }
 
 async function saveWithIndex(request: SaveCoverRequest, index: number): Promise<SaveCoverResult> {
   const options = coverOptionsSchema.parse({ ...request.options, index });
   const format = outputFormatSchema.parse(request.format ?? 'png');
-  const filename = String(index).padStart(3, '0') + '-' + options.type + '-' +
+  const filename = String(index).padStart(3, '0') + '-' + categoryDetails(options.type).filename + '-' +
     safeStem(request.sourceName) + extensionFor(format);
   const outputPath = path.join(request.outputDir, filename);
   const buffer = await encodeCover(await renderCover(request.source, options), format);
