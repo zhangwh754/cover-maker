@@ -1,3 +1,4 @@
+import { apiFetch, history, exportImage, isNative } from './local-api.js';
 const form = document.getElementById('cover-form');
 const imageInput = document.getElementById('image');
 const uploadBox = document.getElementById('upload-box');
@@ -90,14 +91,20 @@ function showPreview(blob) {
 
 function addExportResult(data, format) {
   const item = document.createElement('li');
-  const name = document.createElement('span');
-  name.textContent = data.filename;
-  const link = document.createElement('a');
-  link.href = data.url;
-  link.textContent = '下载 ' + format.toUpperCase();
-  item.append(name, link);
-  exportList.prepend(item);
-  exportResults.hidden = false;
+  const name = document.createElement('span'); name.textContent = data.filename;
+  item.append(name);
+  const action = (label, run) => {
+    const button = document.createElement('button'); button.type = 'button'; button.textContent = label;
+    button.addEventListener('click', async () => {
+      button.disabled = true;
+      try { await run(); } catch(error) { setMessage(errorText(error), true); }
+      finally { button.disabled = false; }
+    }); item.append(button);
+  };
+  action('查看', async () => { cancelPreview(); const response = await apiFetch(data.url); if (!response.ok) throw new Error('封面读取失败'); showPreview(await response.blob()); document.getElementById('preview-panel').scrollIntoView({behavior:'smooth'}); });
+  action(isNative ? '保存图片' : '下载 ' + format.toUpperCase(), async () => { await exportImage(data); setMessage('已保存 ' + data.filename, false); });
+  if (isNative) action('分享', () => exportImage(data, true));
+  exportList.prepend(item); exportResults.hidden = false;
 }
 
 function errorText(error) {
@@ -144,7 +151,7 @@ function selectLocalImage(file, label) {
 
 async function refreshIndex() {
   try {
-    const response = await fetch('/api/sequence');
+    const response = await apiFetch('/api/sequence');
     if (!response.ok) return;
     const data = await response.json();
     indexInput.placeholder = '自动 ' + String(data.nextIndex).padStart(3, '0');
@@ -171,7 +178,7 @@ async function preview() {
   previewController = new AbortController();
   const current = previewSerial;
   try {
-    const response = await fetch('/api/preview', {
+    const response = await apiFetch('/api/preview', {
       method: 'POST',
       body: formData(),
       signal: previewController.signal
@@ -228,7 +235,7 @@ async function importImageUrl() {
   importButton.disabled = true;
   setMessage('正在读取网络图片…', false);
   try {
-    const response = await fetch('/api/import-image', {
+    const response = await apiFetch('/api/import-image', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ url: value }),
@@ -371,7 +378,7 @@ form.addEventListener('submit', async (event) => {
     submittedRevision = revision;
     submittedPreview = current;
     setMessage('正在生成封面…', false);
-    const response = await fetch('/api/covers', { method: 'POST', body: requestData });
+    const response = await apiFetch('/api/covers', { method: 'POST', body: requestData });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || '生成失败');
     addExportResult(data, requestedFormat);
@@ -379,7 +386,7 @@ form.addEventListener('submit', async (event) => {
     await refreshIndex();
     if (revision !== formRevision || current !== previewSerial) return;
     try {
-      const imageResponse = await fetch(data.url);
+      const imageResponse = await apiFetch(data.url);
       if (!imageResponse.ok) throw new Error('封面已生成，预览读取失败，请使用下载链接');
       const imageBlob = await imageResponse.blob();
       if (revision === formRevision && current === previewSerial) showPreview(imageBlob);
@@ -402,3 +409,5 @@ form.addEventListener('submit', async (event) => {
 
 updateControls();
 refreshIndex();
+
+history().then(records => records.reverse().forEach(record => addExportResult(record, record.format))).catch(error => setMessage("历史记录读取失败：" + errorText(error), true));

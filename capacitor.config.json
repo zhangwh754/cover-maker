@@ -1,0 +1,6 @@
+{
+  "appId": "com.covermaker.app",
+  "appName": "每日推荐封面",
+  "webDir": "dist-mobile",
+  "android": { "backgroundColor": "#F5F2EA" }
+}

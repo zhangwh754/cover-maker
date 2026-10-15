@@ -4,28 +4,41 @@
   "private": true,
   "type": "module",
   "engines": {
-    "node": ">=20.9.0"
+    "node": ">=22"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "npm run build:server && npm run build:mobile",
     "cover": "tsx src/cli.ts",
-    "dev": "tsx watch src/server.ts",
+    "dev": "vite",
     "start": "node dist/server.js",
-    "test": "tsx --test tests/*.test.ts"
+    "test": "tsx --test tests/*.test.ts",
+    "build:server": "tsc",
+    "build:mobile": "vite build",
+    "dev:server": "tsx watch src/server.ts",
+    "android:sync": "npm run build:mobile && cap sync android",
+    "android:apk": "powershell -ExecutionPolicy Bypass -File scripts/build-android.ps1"
   },
   "dependencies": {
+    "@capacitor/android": "^8.5.3",
+    "@capacitor/core": "^8.5.3",
+    "@capacitor/filesystem": "^8.1.4",
+    "@capacitor/share": "^8.0.3",
     "commander": "^15.0.0",
     "express": "^5.2.1",
     "ipaddr.js": "^2.5.0",
     "multer": "^2.4.0",
     "sharp": "^0.35.5",
+    "utif": "^3.1.0",
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.5.3",
     "@types/express": "^5.0.6",
     "@types/multer": "^2.3.0",
     "@types/node": "^26.6.3",
+    "fake-indexeddb": "^6.2.5",
     "tsx": "^4.23.15",
-    "typescript": "^7.0.2"
+    "typescript": "^7.0.2",
+    "vite": "^8.3.4"
   }
 }

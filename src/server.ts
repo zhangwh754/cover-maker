@@ -9,7 +9,7 @@ if (!Number.isInteger(port) || port < 1 || port > 65535) {
 const app = createApp({
   outputDir: path.resolve('output'),
   sequencePath: path.resolve('data/sequence.json'),
-  publicDir: path.resolve('public')
+  publicDir: path.resolve('dist-mobile')
 });
 
 app.listen(port, '127.0.0.1', () => {

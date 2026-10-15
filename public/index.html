@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>每日推荐 · 封面生成器</title>
   <link rel="stylesheet" href="/style.css">
   <script type="module" src="/app.js"></script>
@@ -14,7 +14,7 @@
       <div>
         <p class="eyebrow">DAILY RECOMMEND / COVER STUDIO</p>
         <h1>每日推荐封面生成器</h1>
-        <p class="intro">保留原作的样子，加入统一的留白与排版。</p>
+        <p class="intro">图片、编号与历史记录均保存在本机，可离线生成。</p>
       </div>
       <span class="edition">01 / LITERARY</span>
     </header>
@@ -39,7 +39,7 @@
                 placeholder="粘贴网络图片链接 https://…" aria-label="网络图片链接">
               <button id="import-url" type="button">导入链接</button>
             </div>
-            <span class="field-hint">可直接粘贴网页复制的图片，或粘贴图片链接后导入。</span>
+            <span class="field-hint">本地图片可离线使用；导入 HTTPS 图片链接需要联网。</span>
           </div>
           <label class="field">
             <span class="label-text">主题名称 <em>必填</em></span>
@@ -104,7 +104,7 @@
           <p id="message" class="message" role="status" aria-live="polite"></p>
         </form>
         <section id="export-results" class="export-results" aria-labelledby="export-title" hidden>
-          <h3 id="export-title">本次生成记录</h3>
+          <h3 id="export-title">本地历史记录</h3>
           <ul id="export-list"></ul>
         </section>
       </section>

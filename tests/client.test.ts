@@ -4,7 +4,7 @@ import { setImmediate } from 'node:timers/promises';
 import { test } from 'node:test';
 import vm from 'node:vm';
 
-const source = await readFile(new URL('../public/app.js', import.meta.url), 'utf8');
+const source = await readFile(new URL('../public/app.js', import.meta.url), 'utf8').then(value => value.replace(/^import .*local-api.*;\n/m, '').replace(/\nhistory\(\)\.then[\s\S]*$/, ''));
 
 function page() {
   const elements = new Map<string, any>();
@@ -39,7 +39,7 @@ function page() {
     URL: { createObjectURL: (blob: { name: string }) => 'blob:' + blob.name, revokeObjectURL() {} },
     setTimeout(callback: () => Promise<void>) { timers.set(++timer, callback); return timer; },
     clearTimeout(id: number) { timers.delete(id); },
-    fetch(url: string, options: unknown) {
+    apiFetch(url: string, options: unknown) {
       if (url === '/api/sequence') return Promise.resolve({ ok: true, json: async () => ({ nextIndex: 1 }) });
       return new Promise(resolve => requests.push({ url, options, resolve }));
     }

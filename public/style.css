@@ -113,3 +113,9 @@ input[type="range"] { width: 100%; accent-color: #35536b; }
   .preview-note { display: none; }
   .field-row { grid-template-columns: 1fr; gap: 0; }
 }
+
+/* Keep controls clear of system bars and display cutouts. */
+body { padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
+.export-results li { flex-wrap: wrap; gap: 8px; }
+.export-results li span { flex-basis: 100%; overflow-wrap: anywhere; }
+.export-results button { min-height: 44px; padding: 8px 12px; border: 1px solid #d5d0c7; background: transparent; color: #244d6f; border-radius: 6px; }
