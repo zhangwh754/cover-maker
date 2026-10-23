@@ -2,6 +2,7 @@ import UTIF from 'utif';
 import { DESIGN, FONT } from '../src/config.ts';
 import { categoryDetails } from '../src/category.ts';
 import { fitCoverText, coverTextPositions, TITLE_SIZES, DESCRIPTION_SIZES } from '../src/cover-layout.ts';
+import { imageMode, cropRectangle, containRectangle } from '../src/image-layout.ts';
 const fonts = Promise.all([
   new FontFace(FONT.serif, `url(${new URL('../assets/fonts/NotoSerifSC-Regular.otf', import.meta.url)})`).load(),
   new FontFace(FONT.sans, `url(${new URL('../assets/fonts/NotoSansSC-Regular.otf', import.meta.url)})`).load()
@@ -31,9 +32,21 @@ export async function renderLocal(file, options, format) {
   const canvas = document.createElement('canvas'); canvas.width = 1080; canvas.height = 1440;
   const ctx = canvas.getContext('2d');
   ctx.fillStyle = DESIGN.background; ctx.fillRect(0,0,1080,1440);
-  const ratio = options.crop.mode === 'contain' ? Math.min(1080 / image.width,1440 / image.height) : Math.max(1080 / image.width,1440 / image.height);
-  const w = image.width * ratio, h = image.height * ratio;
-  ctx.drawImage(image,(1080-w) * (options.crop.mode === 'contain' ? .5 : options.crop.x),(1440-h) * (options.crop.mode === 'contain' ? .5 : options.crop.y),w,h);
+  const mode = imageMode(image.width,image.height,options.crop.mode);
+  if (mode === 'cover') {
+    // Smart mode ignores any previous manual focus/zoom settings.
+    const crop = cropRectangle(image.width,image.height,options.crop.mode === 'smart' ? {...options.crop,x:.5,y:.5,zoom:1} : options.crop);
+    ctx.drawImage(image,crop.left,crop.top,crop.width,crop.height,0,0,1080,1440);
+  } else {
+    if (mode === 'blur') {
+      const bg = cropRectangle(image.width,image.height,{mode:'cover',x:.5,y:.5,zoom:1});
+      ctx.save();ctx.filter='blur(32px)';
+      ctx.drawImage(image,bg.left,bg.top,bg.width,bg.height,-48,-48,1176,1536);
+      ctx.restore();
+    }
+    const foreground = containRectangle(image.width,image.height);
+    ctx.drawImage(image,foreground.left,foreground.top,foreground.width,foreground.height);
+  }
   const gradient = ctx.createLinearGradient(0,0,0,1440);
   gradient.addColorStop(0,'rgba(20,42,51,0)'); gradient.addColorStop(.38,'rgba(20,42,51,0)');
   gradient.addColorStop(.68,'rgba(20,42,51,.45)'); gradient.addColorStop(1,'rgba(20,42,51,.96)');

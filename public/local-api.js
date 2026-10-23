@@ -41,7 +41,7 @@ export async function apiFetch(url, options={}) {
     for(let attempt=0;attempt<100;attempt++) {
       const expectedIndex = await nextIndex();
       const index=manual?Number(manual):Math.max(candidate || 1, expectedIndex);
-      const parsed=coverOptionsSchema.safeParse({title:data.get('title'),subtitle:data.get('subtitle')||undefined,type:data.get('type'),index,crop:{mode:data.get('crop'),x:Number(data.get('x')),y:Number(data.get('y'))}});
+      const parsed=coverOptionsSchema.safeParse({title:data.get('title'),subtitle:data.get('subtitle')||undefined,type:data.get('type'),index,crop:{mode:data.get('crop'),x:Number(data.get('x')),y:Number(data.get('y')),zoom:Number(data.get('zoom') || 1)}});
       if(!parsed.success)throw new Error(parsed.error.issues[0].message);
       const blob=await renderLocal(file,parsed.data,format);
       options.signal?.throwIfAborted();

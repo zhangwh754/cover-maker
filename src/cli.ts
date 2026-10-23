@@ -6,15 +6,16 @@ import { saveCover } from './sequence.js';
 const program = new Command();
 program
   .name('cover')
-  .description('生成留白文艺系每日推荐封面')
+  .description('生成大图推荐封面')
   .requiredOption('-i, --image <path>', '原始封面图')
   .requiredOption('-t, --title <text>', '封面标题')
   .requiredOption('--type <type>', '预设分类代码或自定义分类名称（最多 20 字符）')
   .option('--subtitle <text>', '描述')
   .option('--index <number>', '手动指定编号；不更新自动编号')
-  .option('--crop <mode>', 'contain（完整显示）或 cover（铺满裁切）', 'cover')
+  .option('--crop <mode>', 'smart（智能适配）、contain（完整显示）或 cover（手动裁切）', 'smart')
   .option('--x <number>', '铺满时的水平焦点，0 到 1', '0.5')
   .option('--y <number>', '铺满时的垂直焦点，0 到 1', '0.5')
+  .option('--zoom <number>', '手动裁切的缩放倍数，1 到 3', '1')
   .option('--format <format>', 'png 或 jpeg', 'png')
   .option('--output <dir>', '输出目录', 'output')
   .option('--sequence <file>', '自动编号文件', 'data/sequence.json')
@@ -33,7 +34,8 @@ try {
       crop: {
         mode: args.crop,
         x: Number(args.x),
-        y: Number(args.y)
+        y: Number(args.y),
+        zoom: Number(args.zoom)
       }
     },
     index: args.index === undefined ? undefined : Number(args.index),

@@ -1,5 +1,6 @@
 import './font-environment.js';
 import sharp from 'sharp';
+import { imageMode, cropRectangle, containRectangle } from './image-layout.js';
 import { DESIGN } from './config.js';
 import { CoverInputError } from './errors.js';
 import { supportedImageFormat } from './image-format.js';
@@ -26,35 +27,18 @@ async function prepareImage(source: ImageSource, options: CoverOptions): Promise
   const { width, height } = await sharp(oriented).metadata();
   if (!width || !height) throw new CoverInputError('无法读取图片尺寸');
 
-  if (options.crop.mode === 'contain') {
-    return sharp(oriented)
-      .resize(DESIGN.image.width, DESIGN.image.height, {
-        fit: 'contain',
-        background: DESIGN.imageBackground
-      })
-      .png()
-      .toBuffer();
+  const mode = imageMode(width,height,options.crop.mode);
+  if (mode === 'cover') {
+    const crop = cropRectangle(width,height,options.crop.mode === 'smart' ? {...options.crop,x:.5,y:.5,zoom:1} : options.crop);
+    return sharp(oriented).extract(crop).resize(DESIGN.width,DESIGN.height).png().toBuffer();
   }
+  const foreground = containRectangle(width,height);
+  const image = await sharp(oriented).resize(foreground.width,foreground.height).png().toBuffer();
+  const background = mode === 'blur'
+    ? sharp(oriented).resize(DESIGN.width,DESIGN.height,{fit:'cover'}).flatten({background:DESIGN.imageBackground}).blur(32)
+    : sharp({create:{width:DESIGN.width,height:DESIGN.height,channels:4,background:DESIGN.imageBackground}});
+  return background.composite([{input:image,left:foreground.left,top:foreground.top}]).png().toBuffer();
 
-  const targetRatio = DESIGN.image.width / DESIGN.image.height;
-  const sourceRatio = width / height;
-  let left = 0;
-  let top = 0;
-  let cropWidth = width;
-  let cropHeight = height;
-  if (sourceRatio > targetRatio) {
-    cropWidth = Math.min(width, Math.round(height * targetRatio));
-    left = Math.round((width - cropWidth) * options.crop.x);
-  } else {
-    cropHeight = Math.min(height, Math.round(width / targetRatio));
-    top = Math.round((height - cropHeight) * options.crop.y);
-  }
-
-  return sharp(oriented)
-    .extract({ left, top, width: cropWidth, height: cropHeight })
-    .resize(DESIGN.image.width, DESIGN.image.height)
-    .png()
-    .toBuffer();
 }
 
 export async function renderCover(source: ImageSource, rawOptions: unknown): Promise<Buffer> {

@@ -27,8 +27,10 @@ npm run cover -- --image input/sora.jpg --title "空之轨迹" --subtitle "the 2
 
 | 参数 | 用途 |
 | --- | --- |
+| `--crop smart` | 默认智能适配：比例接近则铺满，否则模糊背景＋完整原图 |
+| `--zoom 2 --crop cover` | 手动裁切放大 2 倍，可结合 `--x`、`--y` 调整位置 |
 | `--crop contain` | 完整显示原图 |
-| `--crop cover --x 0.5 --y 0` | 默认铺满画布，焦点靠上；`x`、`y` 范围为 0～1 |
+| `--crop cover --x 0.5 --y 0` | 手动铺满画布，焦点靠上；`x`、`y` 范围为 0～1 |
 | `--format jpeg` | 导出高质量 JPEG；默认 PNG |
 | `--index 42` | 手动编号，不修改自动编号记录 |
 | `--output dir` | 指定输出目录 |
@@ -58,7 +60,7 @@ Web 页面预览与最终导出调用同一套渲染代码。JPEG 预览也使�
 | `POST /api/covers` | 生成并保存封面，返回编号、文件名和下载地址 |
 | `GET /api/covers/:filename` | 下载已生成的图片 |
 
-上传字段：`image`（文件）、`title`、`type`；可选 `subtitle`、`index`、`crop`（`contain` 或 `cover`）、`x`、`y`、`format`（`png` 或 `jpeg`）。上传文件最大 20 MB，解码图片上限为 2500 万像素。
+上传字段：`image`（文件）、`title`、`type`；可选 `subtitle`、`index`、`crop`（`smart`、`contain` 或 `cover`）、`x`、`y`、`zoom`（1–3）、`format`（`png` 或 `jpeg`）。上传文件最大 20 MB，解码图片上限为 2500 万像素。
 
 ## 字体与一致性
 

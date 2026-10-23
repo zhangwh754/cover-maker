@@ -34,9 +34,10 @@ function formOptions(body: Record<string, unknown>, index: number) {
     type: body.type,
     index,
     crop: {
-      mode: body.crop || 'cover',
+      mode: body.crop || 'smart',
       x: numberField(body.x, 0.5),
-      y: numberField(body.y, 0.5)
+      y: numberField(body.y, 0.5),
+      zoom: numberField(body.zoom, 1)
     }
   };
 }

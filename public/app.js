@@ -40,6 +40,7 @@ function selectedCrop() {
 
 function updateControls() {
   focusControls.hidden = selectedCrop() !== 'cover';
+  document.getElementById('zoom-value').textContent = Number(document.getElementById('zoom').value || 1).toFixed(2) + '×';
   for (const id of ['x', 'y']) {
     document.getElementById(id + '-value').textContent =
       Math.round(Number(document.getElementById(id).value) * 100) + '%';
@@ -342,6 +343,12 @@ form.addEventListener('change', (event) => {
   if (event.target !== imageInput && event.target !== imageUrlInput) schedulePreview();
 });
 for (const input of cropInputs) input.addEventListener('change', updateControls);
+document.getElementById('reset-crop').addEventListener('click', () => {
+  document.getElementById('x').value = '0.5';
+  document.getElementById('y').value = '0.5';
+  document.getElementById('zoom').value = '1';
+  schedulePreview();
+});
 for (const button of categoryPresets) {
   button.addEventListener('click', () => {
     typeInput.value = button.dataset.category;

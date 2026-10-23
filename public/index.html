@@ -72,10 +72,11 @@
           <div id="crop-settings" class="field">
             <span class="label-text">图片适配</span>
             <div class="segmented">
+              <label><input type="radio" name="crop" value="smart" checked><span>智能适配</span></label>
               <label><input type="radio" name="crop" value="contain"><span>完整显示</span></label>
-              <label><input type="radio" name="crop" value="cover" checked><span>铺满裁切</span></label>
+              <label><input type="radio" name="crop" value="cover"><span>手动裁切</span></label>
             </div>
-            <span class="field-hint">默认铺满画面；调整焦点，让标题避开人物或图片重点。</span>
+            <span class="field-hint">智能适配会按比例选择铺满或模糊背景＋完整原图。切换手动裁切，可调整位置和缩放。</span>
           </div>
 
           <label class="field">
@@ -87,6 +88,10 @@
           </label>
           <div id="focus-controls" class="focus-controls" hidden>
             <label class="field">
+              <span class="label-text">缩放 <output id="zoom-value">1.00×</output></span>
+              <input id="zoom" name="zoom" type="range" min="1" max="3" step="0.01" value="1">
+            </label>
+            <label class="field">
               <span class="label-text">水平焦点 <output id="x-value">50%</output></span>
               <input id="x" name="x" type="range" min="0" max="1" step="0.01" value="0.5">
             </label>
@@ -94,6 +99,7 @@
               <span class="label-text">垂直焦点 <output id="y-value">50%</output></span>
               <input id="y" name="y" type="range" min="0" max="1" step="0.01" value="0.5">
             </label>
+            <button id="reset-crop" type="button">重置裁切</button>
           </div>
 
           <a class="preview-shortcut" href="#preview-panel">查看预览 ↓</a>
