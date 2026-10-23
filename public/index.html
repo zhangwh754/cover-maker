@@ -14,9 +14,9 @@
       <div>
         <p class="eyebrow">DAILY RECOMMEND / COVER STUDIO</p>
         <h1>每日推荐封面生成器</h1>
-        <p class="intro">图片、编号与历史记录均保存在本机，可离线生成。</p>
+        <p class="intro">大图铺满，类型、标题和一段描述，可离线生成。</p>
       </div>
-      <span class="edition">01 / LITERARY</span>
+      <span class="edition">A / 大图推荐</span>
     </header>
 
     <div class="workspace">
@@ -42,19 +42,19 @@
             <span class="field-hint">本地图片可离线使用；导入 HTTPS 图片链接需要联网。</span>
           </div>
           <label class="field">
-            <span class="label-text">主题名称 <em>必填</em></span>
+            <span class="label-text">标题 <em>必填</em></span>
             <input id="title" name="title" type="text" maxlength="80" placeholder="例如：空之轨迹" required>
             <span class="field-hint">标题较长时会自动尝试换成两行。</span>
           </label>
 
           <label class="field">
-            <span class="label-text">副标题 <small>可选</small></span>
-            <input id="subtitle" name="subtitle" type="text" maxlength="80" placeholder="例如：the 2nd">
+            <span class="label-text">描述 <small>可选</small></span>
+            <input id="subtitle" name="subtitle" type="text" maxlength="80" placeholder="例如：慢热，但后劲很大">
           </label>
 
-          <div class="field-row">
+          <div class="category-field">
             <div class="field">
-              <label for="type" class="label-text">分类</label>
+              <label for="type" class="label-text">类型</label>
               <input id="type" name="type" type="text" value="游戏" maxlength="20" required
                 placeholder="输入分类名称" aria-describedby="category-hint">
               <span id="category-hint" class="field-hint">自由输入，或选择下方预设 · 最多 20 字符</span>
@@ -66,19 +66,16 @@
                 <button type="button" data-category="编程" aria-pressed="false">编程</button>
               </span>
             </div>
-            <label class="field">
-              <span class="label-text">编号 <small>留空自动</small></span>
-              <input id="index" name="index" type="number" min="1" max="999999" placeholder="自动 001">
-            </label>
+            <input id="index" name="index" type="hidden" value="">
           </div>
 
           <div id="crop-settings" class="field">
             <span class="label-text">图片适配</span>
             <div class="segmented">
-              <label><input type="radio" name="crop" value="contain" checked><span>完整显示</span></label>
-              <label><input type="radio" name="crop" value="cover"><span>铺满裁切</span></label>
+              <label><input type="radio" name="crop" value="contain"><span>完整显示</span></label>
+              <label><input type="radio" name="crop" value="cover" checked><span>铺满裁切</span></label>
             </div>
-            <span class="field-hint">带标志或文字的海报，建议先用“完整显示”。</span>
+            <span class="field-hint">默认铺满画面；调整焦点，让标题避开人物或图片重点。</span>
           </div>
 
           <label class="field">

@@ -1,11 +1,17 @@
 export const DESIGN = {
   width: 1080,
   height: 1440,
-  background: '#F5F2EA',
-  imageBackground: '#E9E5DC',
-  image: { x: 205, y: 75, width: 805, height: 925 },
-  textCenterX: 607.5,
-  textMaxWidth: 755
+  background: '#142A33',
+  imageBackground: '#142A33',
+  image: { x: 0, y: 0, width: 1080, height: 1440 },
+  textCenterX: 540,
+  textMaxWidth: 952,
+  textLeft: 64,
+  textBottom: 1344,
+  titleColor: '#FFFFFF',
+  descriptionColor: '#F6DB96',
+  badgeBackground: '#F5E7C9',
+  badgeText: '#26363D'
 } as const;
 
 export const CATEGORIES = {

@@ -34,7 +34,7 @@ function formOptions(body: Record<string, unknown>, index: number) {
     type: body.type,
     index,
     crop: {
-      mode: body.crop || 'contain',
+      mode: body.crop || 'cover',
       x: numberField(body.x, 0.5),
       y: numberField(body.y, 0.5)
     }

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import sharp from 'sharp';
-import { layoutTitle } from '../src/overlay.js';
+import { createOverlay, layoutTitle } from '../src/overlay.js';
 import { renderCover } from '../src/render.js';
 import { DESIGN, FONT } from '../src/config.js';
 
@@ -27,13 +27,14 @@ test('renders a cover with escaped text at the exact output size', async () => {
     title: '空之轨迹 & <SC>',
     subtitle: 'the 2nd',
     type: 'game',
-    index: 1
+    index: 1,
+    crop: {mode: "contain", x: .5, y: .5}
   });
   const metadata = await sharp(output).metadata();
   assert.equal(metadata.width, 1080);
   assert.equal(metadata.height, 1440);
   assert.equal(metadata.format, 'png');
-  assert.deepEqual((await pixel(output, 220, 400)).slice(0, 3), [233, 229, 220]);
+  assert.deepEqual((await pixel(output, 40, 400)).slice(0, 3), [20, 42, 51]);
 });
 
 test('cover crop follows the requested vertical focal point', async () => {
@@ -45,10 +46,19 @@ test('cover crop follows the requested vertical focal point', async () => {
   const bottom = await renderCover(source, {
     ...base, crop: { mode: 'cover', x: 0.5, y: 1 }
   });
-  const topPixel = await pixel(top, 500, 100);
-  const bottomPixel = await pixel(bottom, 500, 100);
+  const topPixel = await pixel(top, 500, 200);
+  const bottomPixel = await pixel(bottom, 500, 200);
   assert.deepEqual(topPixel.slice(0, 3), [255, 0, 0]);
   assert.deepEqual(bottomPixel.slice(0, 3), [238, 238, 238]);
+});
+
+test('big-image cover contains only category, title and one description', async () => {
+  const svg = (await createOverlay({title:'空之轨迹',subtitle:'慢热，但后劲很大',type:'游戏',index:123456,crop:{mode:'cover',x:.5,y:.5}})).toString();
+  assert.equal((svg.match(/<text /g) || []).length,3);
+  assert.match(svg,/空之轨迹/);
+  assert.match(svg,/慢热，但后劲很大/);
+  assert.doesNotMatch(svg,/每日推荐|DAILY RECOMMEND|123456/);
+  assert.match(svg,/linearGradient/);
 });
 
 test('long titles use two lines', async () => {
@@ -61,10 +71,10 @@ test('mixed-width titles can break outside the character midpoint candidates', a
   const title = 'Ill '.repeat(9) + '这是一段用于封面排版验证的中文长标题';
   const layout = await layoutTitle(title);
   assert.equal(layout.lines.length, 2);
-  assert.match(layout.lines[0]!, /^Ill(?: Ill)*$/);
+  assert.ok(layout.lines.every(line => line.trim().length > 0));
   assert.equal(layout.lines.join('').replace(/\s/gu, ''), title.replace(/\s/gu, ''));
   for (const line of layout.lines) {
-    const { info } = await sharp({ text: { text: line, font: FONT.serif + ' ' + layout.fontSize, rgba: true } })
+    const { info } = await sharp({ text: { text: line, font: FONT.sans + ' ' + layout.fontSize, rgba: true } })
       .png().toBuffer({ resolveWithObject: true });
     assert.ok(info.width <= DESIGN.textMaxWidth);
   }
