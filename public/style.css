@@ -74,6 +74,8 @@ input[type="range"] { width: 100%; accent-color: #35536b; }
 .generate-button span { font-size: 18px; }
 .message { min-height: 20px; font-size: 12px; color: #5f5c53; margin: 13px 0 0; line-height: 1.5; }
 .message.error { color: #ad4d42; }
+.save-notice { position: fixed; z-index: 100; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom)); transform: translateX(-50%); width: max-content; max-width: calc(100vw - 40px); box-sizing: border-box; margin: 0; padding: 14px 20px; border-radius: 12px; background: #243b43; color: #fff; box-shadow: 0 6px 24px #0003; font-size: 14px; line-height: 1.6; overflow-wrap: anywhere; pointer-events: none; }
+.save-notice.error { background: #883d35; }
 .message a { color: #244d6f; font-weight: 600; }
 .export-results { border-top: 1px solid #d8d4ca; margin-top: 20px; padding-top: 16px; }
 .export-results h3 { font-size: 13px; font-weight: 500; margin: 0 0 12px; }

@@ -6,7 +6,7 @@ import vm from 'node:vm';
 
 const source = await readFile(new URL('../public/app.js', import.meta.url), 'utf8').then(value => value.replace(/^import .*local-api.*;\n/m, '').replace(/\nhistory\(\)\.then[\s\S]*$/, ''));
 
-function page() {
+function page(options: {native?: boolean; exportImage?: () => Promise<unknown>} = {}) {
   const elements = new Map<string, any>();
   const element = (id: string) => {
     if (!elements.has(id)) elements.set(id, {
@@ -25,6 +25,8 @@ function page() {
   const timers = new Map<number, () => Promise<void>>();
   let timer = 0;
   const context = vm.createContext({
+    isNative: options.native ?? false,
+    exportImage: options.exportImage ?? (() => Promise.resolve()),
     document: {
       getElementById: element, querySelector: () => ({ value: 'contain' }),
       querySelectorAll: () => [], addEventListener() {}
@@ -48,6 +50,7 @@ function page() {
   vm.runInContext('selectLocalImage({name:"sample.png",size:100},"sample.png")', context);
   return {
     element, requests,
+    save: () => vm.runInContext('saveImageWithNotice({filename:"cover.png"})', context) as Promise<void>,
     submit: () => element('cover-form').listeners.submit({ preventDefault() {} }) as Promise<void>,
     edit: (value: string) => {
       element('title').value = value;
@@ -75,6 +78,39 @@ test('a failed export resumes the cancelled preview and retains the export error
   assert.equal(current.element('preview-image').src, 'blob:recovered');
   assert.equal(current.element('generate').disabled, false);
   assert.match(current.element('message').textContent, /该编号的文件已存在/);
+});
+
+test('saving shows persistent progress, blocks duplicate writes, then confirms the saved location', async () => {
+  let finish!: (value: unknown) => void;
+  let writes = 0;
+  const current = page({native: true, exportImage: () => {
+    writes++;
+    return new Promise(resolve => { finish = resolve; });
+  }});
+  const saving = current.save();
+  assert.equal(current.element('save-notice').hidden,false);
+  assert.equal(current.element('save-notice').textContent,'正在保存图片…');
+  await current.save();
+  assert.equal(writes,1);
+  finish({location:'相册（Pictures/DailyRecommend）'});
+  await saving;
+  assert.match(current.element('save-notice').textContent,/图片已保存到相册/);
+  assert.equal(current.element('message').textContent,current.element('save-notice').textContent);
+});
+
+test('save failures and cancellations show feedback and allow retry', async () => {
+  let attempt = 0;
+  const current = page({native: true, exportImage: async () => {
+    if (++attempt === 1) throw new Error('空间不足');
+    if (attempt === 2) throw Object.assign(new Error('已取消保存'),{code:'SAVE_CANCELLED'});
+    return {location:'所选位置'};
+  }});
+  await current.save();
+  assert.match(current.element('save-notice').textContent,/保存失败.*空间不足/);
+  await current.save();
+  assert.equal(current.element('save-notice').textContent,'已取消保存');
+  await current.save();
+  assert.equal(current.element('save-notice').textContent,'图片已保存到所选位置');
 });
 
 test('an old failed export leaves a newer preview request running', async () => {

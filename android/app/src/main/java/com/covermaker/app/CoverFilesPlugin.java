@@ -45,7 +45,9 @@ public class CoverFilesPlugin extends Plugin {
                 write(uri, call.getString("data"));
                 values.clear(); values.put(MediaStore.Images.Media.IS_PENDING, 0);
                 getContext().getContentResolver().update(uri, values, null, null);
-                call.resolve();
+                JSObject result = new JSObject();
+                result.put("location", "相册（Pictures/DailyRecommend）");
+                call.resolve(result);
             } catch (Exception error) {
                 if (uri != null) getContext().getContentResolver().delete(uri, null, null);
                 call.reject("保存失败：" + error.getMessage());
@@ -60,8 +62,11 @@ public class CoverFilesPlugin extends Plugin {
     }
     @ActivityCallback private void documentCreated(PluginCall call, ActivityResult result) {
         if (call == null) return;
-        if (result.getResultCode() != Activity.RESULT_OK || result.getData() == null) { call.reject("已取消保存"); return; }
-        try { write(result.getData().getData(), call.getString("data")); call.resolve(); }
+        if (result.getResultCode() != Activity.RESULT_OK || result.getData() == null) { call.reject("已取消保存", "SAVE_CANCELLED"); return; }
+        try {
+            write(result.getData().getData(), call.getString("data"));
+            JSObject saved = new JSObject(); saved.put("location", "所选位置"); call.resolve(saved);
+        }
         catch (Exception error) { call.reject("保存失败：" + error.getMessage()); }
     }
     @PluginMethod public void importImage(PluginCall call) {

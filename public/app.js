@@ -33,6 +33,35 @@ let previewUrl;
 let previewSerial = 0;
 let formRevision = 0;
 let generating = false;
+let saveNoticeTimer;
+let savingImage = false;
+
+function showSaveNotice(text, isError = false, duration = 4500) {
+  clearTimeout(saveNoticeTimer);
+  const notice = document.getElementById('save-notice');
+  notice.textContent = text;
+  notice.classList.toggle('error', isError);
+  notice.hidden = false;
+  if (duration) saveNoticeTimer = setTimeout(() => { notice.hidden = true; }, duration);
+}
+
+async function saveImageWithNotice(data) {
+  if (savingImage) return;
+  savingImage = true;
+  showSaveNotice(isNative ? '正在保存图片…' : '正在准备下载…', false, 0);
+  try {
+    const result = await exportImage(data);
+    const text = isNative ? '图片已保存到' + (result?.location || '所选位置') : '已发起下载，请在浏览器下载记录中查看';
+    setMessage(text, false);
+    showSaveNotice(text);
+  } catch (error) {
+    const detail = errorText(error);
+    const cancelled = error.code === 'SAVE_CANCELLED' || detail === '已取消保存';
+    const text = cancelled ? '已取消保存' : detail.startsWith('保存失败') ? detail : '保存失败：' + detail;
+    setMessage(text, !cancelled);
+    showSaveNotice(text, !cancelled, cancelled ? 3000 : 7000);
+  } finally { savingImage = false; }
+}
 
 function selectedCrop() {
   return document.querySelector('input[name="crop"]:checked').value;
@@ -94,16 +123,17 @@ function addExportResult(data, format) {
   const item = document.createElement('li');
   const name = document.createElement('span'); name.textContent = data.filename;
   item.append(name);
-  const action = (label, run) => {
+  const action = (label, run, busyLabel = label) => {
     const button = document.createElement('button'); button.type = 'button'; button.textContent = label;
     button.addEventListener('click', async () => {
       button.disabled = true;
+      button.textContent = busyLabel;
       try { await run(); } catch(error) { setMessage(errorText(error), true); }
-      finally { button.disabled = false; }
+      finally { button.disabled = false; button.textContent = label; }
     }); item.append(button);
   };
   action('查看', async () => { cancelPreview(); const response = await apiFetch(data.url); if (!response.ok) throw new Error('封面读取失败'); showPreview(await response.blob()); document.getElementById('preview-panel').scrollIntoView({behavior:'smooth'}); });
-  action(isNative ? '保存图片' : '下载 ' + format.toUpperCase(), async () => { await exportImage(data); setMessage('已保存 ' + data.filename, false); });
+  action(isNative ? '保存图片' : '下载 ' + format.toUpperCase(), () => saveImageWithNotice(data), isNative ? '保存中…' : '准备下载…');
   if (isNative) action('分享', () => exportImage(data, true));
   exportList.prepend(item); exportResults.hidden = false;
 }
